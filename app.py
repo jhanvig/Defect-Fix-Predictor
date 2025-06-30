@@ -31,6 +31,7 @@ def load_data():
 df = load_data()
 shared_metrics = {}
 
+# Feature engineering
 tfidf = TfidfVectorizer(max_features=500, ngram_range=(1, 2))
 desc_vecs_full = tfidf.fit_transform(df['Description']).toarray()
 
@@ -74,6 +75,13 @@ user_tab, admin_tab = st.tabs(["User Panel", "Admin Panel"])
 
 with user_tab:
     st.title("🛠️ Defect Fix Time Predictor")
+
+    # Session state init
+    if "total_time" not in st.session_state:
+        st.session_state.total_time = 0.0
+        st.session_state.total_hours = 0.0
+        st.session_state.predictions = []
+
     module_filter = st.sidebar.selectbox("📁 Filter by Module", ["All"] + sorted(df['Module Name'].unique().tolist()))
     df_user = df if module_filter == "All" else df[df['Module Name'] == module_filter]
 
@@ -90,7 +98,7 @@ with user_tab:
     root = st.selectbox("🧬 Root Cause", df_user['Root Cause'].unique())
     reopen = st.number_input("🔁 Reopen Count", min_value=0, step=1)
 
-    if st.button("🔍 Predict Fix Time"):
+    if st.button("➕ Predict & Add to Total"):
         if not desc.strip():
             st.error("Please enter a valid description.")
         else:
@@ -108,8 +116,28 @@ with user_tab:
             }])
             final_input = pd.concat([pd.DataFrame(desc_input, columns=desc_df.columns), struct_input], axis=1)
             pred_days = np.expm1(model_full.predict(final_input)[0])
-            st.success(f"🕒 Estimated fix time: **{round(pred_days, 2)} days**")
-            st.metric("⏱️ Hours to Deployment", f"{round(pred_days * 8, 1)} hrs")
+            pred_hours = pred_days * 8
+
+            st.session_state.total_time += pred_days
+            st.session_state.total_hours += pred_hours
+            st.session_state.predictions.append((desc[:50], pred_days))
+
+            st.success(f"Added! Estimated: **{round(pred_days, 2)} days** ({round(pred_hours, 1)} hrs)")
+
+    if st.session_state.predictions:
+        st.subheader("🧾 Summary of Added Defects")
+        for i, (desc_summary, days) in enumerate(st.session_state.predictions, 1):
+            st.write(f"{i}. **{desc_summary}...** — {round(days, 2)} days")
+
+        st.markdown("---")
+        st.metric("📊 Total Estimated Fix Time", f"{round(st.session_state.total_time, 2)} days")
+        st.metric("⏱️ Total Hours to Deployment", f"{round(st.session_state.total_hours, 1)} hrs")
+
+    if st.button("🔄 Reset All"):
+        st.session_state.total_time = 0.0
+        st.session_state.total_hours = 0.0
+        st.session_state.predictions = []
+        st.success("Session cleared. Ready to start fresh!")
 
 with admin_tab:
     st.title("🔒 Admin Panel")
