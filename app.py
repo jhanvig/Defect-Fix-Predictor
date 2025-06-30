@@ -11,8 +11,6 @@ from sklearn.metrics import (
 )
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# ------------------ Load and preprocess data ------------------
-
 @st.cache_data
 def load_data():
     df = pd.read_csv('synthetic_defect_data_mindgate_500_updated.csv')
@@ -32,8 +30,6 @@ def load_data():
 
 df = load_data()
 shared_metrics = {}
-
-# ------------------ Feature Engineering ------------------
 
 tfidf = TfidfVectorizer(max_features=500, ngram_range=(1, 2))
 desc_vecs_full = tfidf.fit_transform(df['Description']).toarray()
@@ -57,8 +53,6 @@ desc_df = pd.DataFrame(desc_vecs_full, columns=[f"tfidf_{i}" for i in range(desc
 X_full = pd.concat([desc_df, X_struct_full.reset_index(drop=True)], axis=1)
 y_full = df['Estimated Fix Days'].apply(np.log1p)
 
-# ------------------ Train RandomForest ------------------
-
 X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
     X_full, y_full, test_size=0.2, random_state=42
 )
@@ -75,8 +69,6 @@ shared_metrics['rmse'] = np.sqrt(shared_metrics['mse'])
 shared_metrics['r2'] = r2_score(y_test_actual_rf, y_pred_rf)
 
 model_full = rf_model
-
-# ------------------ Streamlit UI ------------------
 
 user_tab, admin_tab = st.tabs(["User Panel", "Admin Panel"])
 
