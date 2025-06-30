@@ -38,3 +38,29 @@ It's built using:
 ```bash
 git clone https://github.com/your-username/defect-fix-predictor.git
 cd defect-fix-predictor
+```
+2. **Install packages** 
+
+```bash
+pip install -r requirements.txt
+```
+
+3. **Run the app**
+
+```bash
+streamlit run app.py
+```
+
+**🌐 Streamlit Cloud**
+You can also run it on Streamlit Cloud by deploying this GitHub repo.
+
+👩‍💻 Made By
+Jhanvi Gopal
+
+## 📝 License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+
+
+
+
